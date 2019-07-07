@@ -219,8 +219,10 @@ class Palette : public QWidget {
       int idx(const QPoint&) const;
       };
 
-      class PaletteList : public QListWidget {
+class PaletteList : public QListWidget {
          Q_OBJECT
+
+         qreal extraMag;
 
          protected:
             virtual void resizeEvent(QResizeEvent *event) override;
@@ -230,13 +232,24 @@ class Palette : public QWidget {
             void  read(XmlReader& e);
       };
 
-      class PaletteCellItem : public  QListWidgetItem {
+class PaletteCellItem : public  QListWidgetItem {
+
+         QPixmap pixmap(qreal extraMag) const;
+         QString name;           // used for tool tip
+         QString tag;
+         bool drawStaff { false };
+         double x       { 0.0   };
+         double y       { 0.0   };
+         double xoffset { 0.0   };
+         double yoffset { 0.0   };      // in spatium units of "gscore"
+         qreal mag      { 1.0   };
+         bool readOnly  { false };
 
          public:
             PaletteCellItem(PaletteList* parent);
             Element* element = nullptr;
             void setName(QString name){setText(name);}
-            bool read(XmlReader& e);
+            bool read(XmlReader& e, qreal extraMag);
       };
 
 

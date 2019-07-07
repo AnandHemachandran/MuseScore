@@ -1928,6 +1928,11 @@ void Palette::dropEvent(QDropEvent* event)
       emit changed();
       }
 
+
+//---------------------------------------------------------
+//   Palette List (QListWidget)
+//---------------------------------------------------------
+
 PaletteList::PaletteList(QWidget* parent) : QListWidget(parent)
       {
       setAutoFillBackground(true);
@@ -1944,19 +1949,20 @@ void PaletteList::read(XmlReader& e)
             else if (t == "gridHeight")
                   /*vgrid =*/ e.readDouble();
             else if (t == "mag")
-                  /*extraMag =*/ e.readDouble();
+                  extraMag = e.readDouble();
             else if (t == "grid")
                   /*_drawGrid =*/ e.readInt();
             else if (t == "moreElements")
                   /*setMoreElements(*/ e.readInt();
             else if (t == "yoffset")
                   /*_yOffset =*/ e.readDouble();
-            else if (t == "drumPalette")      // obsolete
+            else if (t == "drumPalette")      // obsoletes
                   e.skipCurrentElement();
             else if (t == "Cell") {
                   PaletteCellItem* cell = new PaletteCellItem(this);
                   cell->setName(e.attribute("name"));
-                  if (!cell->read(e)){
+                  cell->setToolTip(e.attribute("name"));
+                  if (!cell->read(e, extraMag)){
                         Element* element = cell->element;
                         delete cell;
                         if(!element)
@@ -1979,27 +1985,30 @@ void PaletteList::read(XmlReader& e)
             setFixedHeight(yPos);
       }
 
+//---------------------------------------------------------
+//   PaletteCellItem (QListWidgetItem)
+//---------------------------------------------------------
 
 PaletteCellItem::PaletteCellItem(PaletteList* parent) : QListWidgetItem(parent)
-      {     
+      {
 
       }
 
 
-bool PaletteCellItem::read(XmlReader& e)
+bool PaletteCellItem::read(XmlReader& e, qreal extraMag)
       {
       while (e.readNextStartElement()) {
             const QStringRef& t1(e.name());
             if (t1 == "staff")
-                  /* cell->drawStaff= */ e.readInt();
+                  drawStaff = e.readInt();
             else if (t1 == "xoffset")
-                  /* cell->xoffset = */ e.readDouble();
+                  xoffset = e.readDouble();
             else if (t1 == "yoffset")
-                  /* cell->yoffset = */ e.readDouble();
+                  yoffset = e.readDouble();
             else if (t1 == "mag")
-                  /* cell->mag = */ e.readDouble();
+                  mag = e.readDouble();
             else if (t1 == "tag")
-                  /* cell->tag = */ e.readElementText();
+                  tag = e.readElementText();
             else {
                   element = Element::name2Element(t1, gscore);
                   if (!element) {
@@ -2020,12 +2029,62 @@ bool PaletteCellItem::read(XmlReader& e)
                               else {
                                     return false; // action is not valid, don't add it to the palette.
                                     }
+                        }
+                        else{
+                              QIcon icon(pixmap(extraMag));
+                              setIcon(icon);
                               }
                         }
                   }
             }
       return true;
       }
+
+QPixmap PaletteCellItem::pixmap(qreal extraMag) const
+      {
+      qreal _spatium = gscore->spatium();
+      qreal mag  	= PALETTE_SPATIUM * extraMag / _spatium;
+      qreal cellMag = this->mag *  mag;
+      Element* e = this->element;
+      e->layout();
+      QRectF r = e->bbox();
+      int w    = lrint(r.width()  * cellMag);
+      int h    = lrint(r.height() * cellMag);
+
+      if (w * h == 0) {
+            qDebug("zero pixmap %d %d %s", w, h, e->name());
+            return QPixmap();
+            }
+
+      QPixmap pm(w, h);
+      pm.fill(Qt::transparent);
+      QPainter p(&pm);
+      p.setRenderHint(QPainter::Antialiasing, true);
+
+      if (e->isIcon())
+            toIcon(e)->setExtent(w < h ? w : h);
+      p.scale(cellMag, cellMag);
+
+      QPointF pos = e->ipos();
+      e->setPos(-r.topLeft());
+
+      QColor color;
+       // show voice colors for notes
+      if (e->isChord()) {
+             Chord* chord = toChord(e);
+             for (Note* n : chord->notes())
+                   n->setSelected(true);
+             color = e->curColor();
+             }
+       else
+             color = QPalette().color(QPalette::Normal, QPalette::Text);
+
+      p.setPen(QPen(color));
+      e->scanElements(&p, paintPaletteElement);
+      e->setPos(pos);
+      return pm;
+      }
+
 
 }
 
