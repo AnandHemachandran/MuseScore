@@ -219,8 +219,7 @@ class Palette : public QWidget {
       int idx(const QPoint&) const;
       };
 
-      class PaletteList : public QListWidget
-      {
+      class PaletteList : public QListWidget {
          Q_OBJECT
 
          protected:
@@ -231,13 +230,13 @@ class Palette : public QWidget {
             void  read(XmlReader& e);
       };
 
-      class PaletteCellItem : public  QListWidgetItem
-      {
+      class PaletteCellItem : public  QListWidgetItem {
+
          public:
             PaletteCellItem(PaletteList* parent);
             Element* element = nullptr;
             void setName(QString name){setText(name);}
-            bool  read(XmlReader& e);
+            bool read(XmlReader& e);
       };
 
 

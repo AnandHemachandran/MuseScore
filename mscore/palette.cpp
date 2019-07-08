@@ -1979,6 +1979,7 @@ void PaletteList::read(XmlReader& e)
             setFixedHeight(yPos);
       }
 
+
 PaletteCellItem::PaletteCellItem(PaletteList* parent) : QListWidgetItem(parent)
       {     
 
