@@ -31,6 +31,8 @@ class Sym;
 class XmlWriter;
 class XmlReader;
 class Palette;
+class PaletteCellItem;
+class PaletteList;
 
 //---------------------------------------------------------
 //   PaletteCell
@@ -218,28 +220,9 @@ class Palette : public QWidget {
       virtual QSize sizeHint() const;
       int idx(const QPoint&) const;
       };
-
-class PaletteList : public QListWidget {
-         Q_OBJECT
-
-         int hgrid;
-         int vgrid;
-         qreal extraMag;
-         QListWidgetItem* currIdx;
-
-         protected:
-            virtual void resizeEvent(QResizeEvent *event) override;
-            virtual void keyPressEvent(QKeyEvent *event) override;
-
-         public:
-            PaletteList(QWidget* parent); 
-            void  read(XmlReader& e);
-            void setGrid(int ,int);
-      };
-
+   
 class PaletteCellItem : public  QListWidgetItem {
 
-         QPixmap pixmap(qreal extraMag) const;
          QString name;           // used for tool tip
          QString tag;
          bool drawStaff { false };
@@ -255,8 +238,54 @@ class PaletteCellItem : public  QListWidgetItem {
             Element* element = nullptr;
             void setName(QString name){setText(name);}
             bool read(XmlReader& e, qreal extraMag);
+            QPixmap pixmap(qreal extraMag) const;
+
       };
+
+class PaletteList : public QListWidget {
+         Q_OBJECT
+
+         QList<PaletteCell*> cells;
+         QList<PaletteCell*> dragCells;
+         int hgrid;
+         int vgrid;
+         qreal extraMag;
+         QListWidgetItem* currIdx;
+         int currentIdx;
+         int dragIdx;
+         int selectedIdx;
+         QPoint dragStartPosition;
+         bool _moreElements;
+
+         bool _disableDoubleClick { false };
+         void applyPaletteElement(PaletteCellItem* cell, Qt::KeyboardModifiers modifiers = 0);
+
+
+         protected:
+            virtual void resizeEvent(QResizeEvent *event) override;
+            virtual void keyPressEvent(QKeyEvent *event) override;
+            virtual void mouseDoubleClickEvent(QMouseEvent*) override;
+            virtual void mouseMoveEvent(QMouseEvent*) override;
+           // virtual void dragEnterEvent(QDragEnterEvent*) override;
+           // virtual void dragMoveEvent(QDragMoveEvent*) override;
+           // virtual void dropEvent(QDropEvent*) override;
+
+         public:
+            void applyPaletteElement();
+            PaletteList(QWidget* parent); 
+            void  read(XmlReader& e);
+            void setGrid(int ,int);
+           // PaletteCell* append(Element*, const QString& name, QString tag = QString(),qreal mag = 1.0);
+           // PaletteCell* add(int idx, Element*, const QString& name,
+             //  const QString tag = QString(), qreal mag = 1.0);
+            int getCurrentIdx() { return currentIdx; }
+            void setCurrentIdx(int i) { currentIdx = i; }
+
+      };
+
+
 
 
 } // namespace Ms
 #endif
+
