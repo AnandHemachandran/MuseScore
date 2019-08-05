@@ -1944,6 +1944,8 @@ PaletteList::PaletteList(QWidget* parent) : QListWidget(parent)
       setAutoFillBackground(true);
       setViewMode(QListView::IconMode);
       setResizeMode(QListView::Adjust);
+      setDragEnabled(true);
+      setDropIndicatorShown(true);
       //setUniformItemSizes(true);
       }
 
@@ -1967,7 +1969,7 @@ void PaletteList::read(XmlReader& e)
                   e.skipCurrentElement();
             else if (t == "Cell") {
                   PaletteCellItem* cell = new PaletteCellItem(this);
-                  //cell->setName(e.attribute("name"));
+                  cell->setName(e.attribute("name"));
                   cell->setToolTip(e.attribute("name"));
                   if (!cell->read(e, extraMag)){
                         Element* element = cell->element;
@@ -1979,8 +1981,6 @@ void PaletteList::read(XmlReader& e)
             else
                   e.unknown();
             }
-            qDebug()<<"The HGrid is: "<< hgrid;
-            qDebug()<<"The VGrid is: "<< vgrid;
             setGrid(hgrid,vgrid);
 
       }
@@ -2012,8 +2012,11 @@ void PaletteList::keyPressEvent(QKeyEvent *event)
       int numItems = count();
       currIdx = this->currentItem();
       int pos = row(currIdx);
-      qDebug()<<"The position of the current element is "<< pos;
       switch(event->key()){
+            case Qt::Key_Return:
+                  applyPaletteElement(static_cast<PaletteCellItem*>(currIdx), event->modifiers());
+                  return;    
+                  break;
             case Qt::Key_Down:
                 pos++;
                 if (pos < numItems) {
@@ -2179,9 +2182,8 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
 
                   QPoint hotsp(drag->pixmap().rect().bottomRight());
                   drag->setHotSpot(hotsp);
-                  /*
                   Qt::DropActions da;
-                  if (!(_readOnly || filterActive) && (ev->modifiers() & Qt::ShiftModifier)) {
+                  if ((ev->modifiers() & Qt::ShiftModifier)) {
                         dragCells = cells;      // backup
                         da = Qt::MoveAction;
                         }
@@ -2190,7 +2192,6 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
                   Qt::DropAction a = drag->exec(da);
                   if (da == Qt::MoveAction && a != da)
                         cells = dragCells;      // restore on a failed move action
-                  */
                   update();
                   }
             }
@@ -2523,69 +2524,6 @@ void PaletteList::applyPaletteElement(PaletteCellItem* cell, Qt::KeyboardModifie
       viewer->setDropTarget(0);
 //      mscore->endCmd();
       }
-//---------------------------------------------------------
-//   append
-//    append element to palette
-//---------------------------------------------------------
-/*PaletteCell* PaletteList::append(Element* s, const QString& name, QString tag, qreal mag)
-      {
-      if (s == 0) {
-            cells.append(0);
-            return 0;
-            }
-      PaletteCellItem* cell = new PaletteCellItem();
-      int idx;
-      if (_moreElements) {
-            cells.insert(cells.size() - 1, cell);
-            idx = cells.size() - 2;
-            }
-      else {
-            cells.append(cell);
-            idx = cells.size() - 1;
-            }
-      PaletteCell* pc = add(idx, s, name, tag, mag);
-      setFixedHeight(heightForWidth(width()));
-      updateGeometry();
-      return pc;
-      }
-
-//---------------------------------------------------------
-//   add
-//---------------------------------------------------------
-
-PaletteCell* PaletteList::add(int idx, Element* s, const QString& name, QString tag, qreal mag)
-      {
-      if (s) {
-            s->setPos(0.0, 0.0);
-            s->setOffset(QPointF());
-            }
-
-      PaletteCell* cell = new PaletteCell;
-      if (idx < cells.size()) {
-            delete cells[idx];
-            }
-      else {
-            for (int i = cells.size(); i <= idx; ++i)
-                  cells.append(0);
-            }
-      cells[idx]      = cell;
-      cell->element   = s;
-      cell->name      = name;
-      cell->tag       = tag;
-      cell->drawStaff = needsStaff(s);
-      cell->xoffset   = 0;
-      cell->yoffset   = 0;
-      cell->mag       = mag;
-      cell->readOnly  = false;
-      update();
-      if (s && s->isIcon()) {
-            Icon* icon = toIcon(s);
-            connect(getAction(icon->action()), SIGNAL(toggled(bool)), SLOT(actionToggled(bool)));
-            }
-      updateGeometry();
-      return cell;
-      }
-
 
 //---------------------------------------------------------
 //   dragEnterEvent
@@ -2633,12 +2571,12 @@ void PaletteList::dragEnterEvent(QDragEnterEvent* event)
 
 void PaletteList::dragMoveEvent(QDragMoveEvent* event)
       {
-      int i = idx(event->pos());
+      int i = currentRow();
       if (event->source() == this) {
             if (i != -1) {
                   if (currentIdx != -1 && event->proposedAction() == Qt::MoveAction) {
                         if (i != currentIdx) {
-                              PaletteCell* c = cells.takeAt(currentIdx);
+                              PaletteCellItem* c = static_cast<PaletteCellItem*>(item(i));
                               cells.insert(i, c);
                               currentIdx = i;
                               update();
@@ -2728,7 +2666,7 @@ void PaletteList::dropEvent(QDropEvent* event)
             }
 
       e->setSelected(false);
-      int i = idx(event->pos());
+      /*int i = currentRow();
       if (i == -1 || cells[i])
             append(e, name);
       else
@@ -2736,12 +2674,74 @@ void PaletteList::dropEvent(QDropEvent* event)
       event->accept();
       while (!cells.isEmpty() && cells.back() == 0)
             cells.removeLast();
+      */
       setFixedHeight(heightForWidth(width()));
       updateGeometry();
       update();
       emit changed();
       }
+/*//---------------------------------------------------------
+//   append
+//    append element to palette
+//---------------------------------------------------------
+PaletteCellItem* PaletteList::append(Element* s, const QString& name, QString tag, qreal mag)
+      {
+      if (s == 0) {
+            cells.append(0);
+            return 0;
+            }
+      PaletteCellItem* cell = new PaletteCellItem();
+      int idx;
+      if (_moreElements) {
+            cells.insert(cells.size() - 1, cell);
+            idx = cells.size() - 2;
+            }
+      else {
+            cells.append(cell);
+            idx = cells.size() - 1;
+            }
+      PaletteCellItem* pc = add(idx, s, name, tag, mag);
+      setFixedHeight(heightForWidth(width()));
+      updateGeometry();
+      return pc;
+      }
 
+//---------------------------------------------------------
+//   add
+//---------------------------------------------------------
+
+PaletteCellItem* PaletteList::add(int idx, Element* s, const QString& name, QString tag, qreal mag)
+      {
+      if (s) {
+            s->setPos(0.0, 0.0);
+            s->setOffset(QPointF());
+            }
+
+      PaletteCellItem* cell = new PaletteCellItem();
+      if (idx < cells.size()) {
+            delete cells[idx];
+            }
+      else {
+            for (int i = cells.size(); i <= idx; ++i)
+                  cells.append(0);
+            }
+      cells[idx]      = cell;
+      cell->element   = s;
+      cell->name      = name;
+      cell->tag       = tag;
+      cell->drawStaff = needsStaff(s);
+      cell->xoffset   = 0;
+      cell->yoffset   = 0;
+      cell->mag       = mag;
+      cell->readOnly  = false;
+      update();
+      if (s && s->isIcon()) {
+            Icon* icon = toIcon(s);
+            connect(getAction(icon->action()), SIGNAL(toggled(bool)), SLOT(actionToggled(bool)));
+            }
+      updateGeometry();
+      return cell;
+      }
 */
 }
 

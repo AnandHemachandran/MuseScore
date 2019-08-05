@@ -245,8 +245,8 @@ class PaletteCellItem : public  QListWidgetItem {
 class PaletteList : public QListWidget {
          Q_OBJECT
 
-         QList<PaletteCell*> cells;
-         QList<PaletteCell*> dragCells;
+         QList<PaletteCellItem*> cells;
+         QList<PaletteCellItem*> dragCells;
          int hgrid;
          int vgrid;
          qreal extraMag;
@@ -266,17 +266,20 @@ class PaletteList : public QListWidget {
             virtual void keyPressEvent(QKeyEvent *event) override;
             virtual void mouseDoubleClickEvent(QMouseEvent*) override;
             virtual void mouseMoveEvent(QMouseEvent*) override;
-           // virtual void dragEnterEvent(QDragEnterEvent*) override;
-           // virtual void dragMoveEvent(QDragMoveEvent*) override;
-           // virtual void dropEvent(QDropEvent*) override;
+            virtual void dragEnterEvent(QDragEnterEvent*) override;
+            virtual void dragMoveEvent(QDragMoveEvent*) override;
+            virtual void dropEvent(QDropEvent*) override;
 
+         signals:
+            void changed();
+            
          public:
             void applyPaletteElement();
             PaletteList(QWidget* parent); 
             void  read(XmlReader& e);
             void setGrid(int ,int);
-           // PaletteCell* append(Element*, const QString& name, QString tag = QString(),qreal mag = 1.0);
-           // PaletteCell* add(int idx, Element*, const QString& name,
+           // PaletteCellItem* append(Element*, const QString& name, QString tag = QString(),qreal mag = 1.0);
+           // PaletteCellItem* add(int idx, Element*, const QString& name,
              //  const QString tag = QString(), qreal mag = 1.0);
             int getCurrentIdx() { return currentIdx; }
             void setCurrentIdx(int i) { currentIdx = i; }
