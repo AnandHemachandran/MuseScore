@@ -252,7 +252,7 @@ class PaletteList : public QListWidget {
          qreal extraMag;
          QListWidgetItem* currIdx;
          int currentIdx;
-         int dragIdx;
+         PaletteCellItem* dragIdx;
          int selectedIdx;
          QPoint dragStartPosition;
          bool _moreElements;
@@ -265,6 +265,7 @@ class PaletteList : public QListWidget {
             virtual void resizeEvent(QResizeEvent *event) override;
             virtual void keyPressEvent(QKeyEvent *event) override;
             virtual void mouseDoubleClickEvent(QMouseEvent*) override;
+            virtual void mousePressEvent(QMouseEvent*) override;
             virtual void mouseMoveEvent(QMouseEvent*) override;
             virtual void dragEnterEvent(QDragEnterEvent*) override;
             virtual void dragMoveEvent(QDragMoveEvent*) override;

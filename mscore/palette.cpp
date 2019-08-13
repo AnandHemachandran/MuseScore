@@ -1929,7 +1929,6 @@ void Palette::dropEvent(QDropEvent* event)
       emit changed();
       }
 
-
 //---------------------------------------------------------
 //   Palette List (QListWidget)
 //---------------------------------------------------------
@@ -1938,13 +1937,14 @@ PaletteList::PaletteList(QWidget* parent) : QListWidget(parent)
       {
       extraMag      = 1.0;
       currentIdx    = -1;
-      dragIdx       = -1;
+      dragIdx       = 0;
       selectedIdx   = -1;
       setMouseTracking(true);
       setAutoFillBackground(true);
       setViewMode(QListView::IconMode);
       setResizeMode(QListView::Adjust);
       setDragEnabled(true);
+      setAcceptDrops(true);
       setDropIndicatorShown(true);
       //setUniformItemSizes(true);
       }
@@ -2166,7 +2166,7 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
             ev->ignore();
             return;
             }
-      if ((currentIdx != -1) && (dragIdx == currentIdx) && (ev->buttons() & Qt::LeftButton)
+      if ((currentIdx != -1) && (row(dragIdx) == currentIdx) && (ev->buttons() & Qt::LeftButton)
          && (ev->pos() - dragStartPosition).manhattanLength() > QApplication::startDragDistance())
             {
             PaletteCellItem* cell = static_cast<PaletteCellItem*>(item(currentIdx));
@@ -2178,7 +2178,7 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
                   mimeData->setData(mimeSymbolFormat, el->mimeData(QPointF()));
                   drag->setMimeData(mimeData);
 
-                  drag->setPixmap(cell->pixmap(currentIdx));
+                  drag->setPixmap(cell->pixmap(1.0));
 
                   QPoint hotsp(drag->pixmap().rect().bottomRight());
                   drag->setHotSpot(hotsp);
@@ -2524,6 +2524,16 @@ void PaletteList::applyPaletteElement(PaletteCellItem* cell, Qt::KeyboardModifie
       viewer->setDropTarget(0);
 //      mscore->endCmd();
       }
+
+//---------------------------------------------------------
+//   mousePressedEvent
+//---------------------------------------------------------
+void PaletteList::mousePressEvent(QMouseEvent* ev)
+  	{
+  	QListWidget::mousePressEvent(ev);
+  	dragStartPosition = ev->pos();
+  	dragIdx       	= static_cast<PaletteCellItem*>(itemAt(dragStartPosition));
+            }
 
 //---------------------------------------------------------
 //   dragEnterEvent
