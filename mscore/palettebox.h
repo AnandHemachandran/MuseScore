@@ -32,6 +32,17 @@ class PaletteTree : public QTreeWidget {
       protected:
          virtual void resizeEvent(QResizeEvent *event) override;
          virtual void showEvent(QShowEvent *event) override;
+         virtual void contextMenuEvent(QContextMenuEvent*) override;
+
+      private slots:
+         void deleteTriggered(QTreeWidgetItem* item)     { emit paletteItemCmd(PaletteCommand::PDELETE, item);  }
+         void saveTriggered(QTreeWidgetItem* item)       { emit paletteItemCmd(PaletteCommand::SAVE, item);    }
+         void loadTriggered(QTreeWidgetItem* item)       { emit paletteItemCmd(PaletteCommand::LOAD, item);    }
+         void propertiesTriggered(QTreeWidgetItem* item) { emit paletteItemCmd(PaletteCommand::EDIT, item);    }
+         void upTriggered(QTreeWidgetItem* item)         { emit paletteItemCmd(PaletteCommand::UP, item);      }
+         void downTriggered(QTreeWidgetItem* item)       { emit paletteItemCmd(PaletteCommand::DOWN, item);    }
+         void newTriggered(QTreeWidgetItem* item)        { emit paletteItemCmd(PaletteCommand::NEW, item);     }
+         void paletteItemCmd(PaletteCommand, QTreeWidgetItem*);
 
       public:
          PaletteTree(QWidget* parent);
@@ -47,7 +58,7 @@ class PaletteBox : public QDockWidget {
       QLineEdit* _searchBox;
       PaletteTree* tree = nullptr;
       const int paletteStretch = 1000;
-      QAction* singlePaletteAction;
+      //QAction* singlePaletteAction;
       QToolButton* addWorkspaceButton;
       bool keyboardNavigation = false;
 

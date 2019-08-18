@@ -280,14 +280,14 @@ void Palette::contextMenuEvent(QContextMenuEvent* event)
             cells[i] = nullptr;
             emit changed();
             }
-      else if (action == contextAction) {
+      /*else if (action == contextAction) {
             PaletteCell* c = cellAt(i);
             if (c == 0)
                   return;
             PaletteCellProperties props(c);
             if (props.exec())
                   emit changed();
-            }
+            }*/
       else if (moreAction && (action == moreAction))
             emit displayMore(_name);
 
@@ -1701,7 +1701,7 @@ void PaletteProperties::hideEvent(QHideEvent* event)
 //   PaletteCellProperties
 //---------------------------------------------------------
 
-PaletteCellProperties::PaletteCellProperties(PaletteCell* p, QWidget* parent)
+PaletteCellProperties::PaletteCellProperties(PaletteCellItem* p, QWidget* parent)
    : QDialog(parent)
       {
       setObjectName("PaletteCellProperties");
@@ -1969,7 +1969,8 @@ void PaletteList::read(XmlReader& e)
                   e.skipCurrentElement();
             else if (t == "Cell") {
                   PaletteCellItem* cell = new PaletteCellItem(this);
-                  cell->setName(e.attribute("name"));
+                  //cell->setName(e.attribute("name"));
+                  cell->name = e.attribute("name");
                   cell->setToolTip(e.attribute("name"));
                   if (!cell->read(e, extraMag)){
                         Element* element = cell->element;
@@ -1987,7 +1988,7 @@ void PaletteList::read(XmlReader& e)
 
 void PaletteList::setGrid(int hh, int vv)
       {
-      hgrid = hh + 20;
+      hgrid = hh + 10;
       vgrid = vv + 10;
       QSize s(hgrid, vgrid);
       setGridSize(s);
@@ -2004,7 +2005,7 @@ void PaletteList::setGrid(int hh, int vv)
             QListWidgetItem* last = item(numItems-1);
             QRect lastItem = visualItemRect(last);
             int yPos = lastItem.bottom();
-            setFixedHeight(yPos);
+            setFixedHeight(yPos + 5);
       }
 
 void PaletteList::keyPressEvent(QKeyEvent *event)
@@ -2690,4 +2691,81 @@ void PaletteList::dropEvent(QDropEvent* event)
       update();
       emit changed();
       }
+
+void PaletteList::contextMenuEvent(QContextMenuEvent* event)
+  	{
+      if(!(itemAt(event->pos())))
+            return;
+      else{
+
+      //header
+            PaletteCellItem* cell = static_cast<PaletteCellItem*>(itemAt(event->pos()));
+            QMenu menu;
+            menu.addAction(cell->name);
+
+      //Options to customize the menu
+            int i = currentRow();
+            if (i == -1) {
+                  if (!_moreElements)
+                        return;
+                  QMenu menu;
+                  QAction* moreAction = menu.addAction(tr("More Elements…"));
+                  moreAction->setEnabled(_moreElements);
+                  QAction* action = menu.exec(mapToGlobal(event->pos()));
+                  if (action == moreAction)
+                        emit displayMore(_name);
+                  return;
+            }
+            menu.addSeparator();
+            QAction* deleteCellAction   = menu.addAction(tr("Delete"));
+            QAction* contextAction = menu.addAction(tr("Properties…"));
+            //deleteCellAction->setEnabled(!_readOnly);
+            //contextAction->setEnabled(!_readOnly);
+            QAction* moreAction    = menu.addAction(tr("More Elements…"));
+            moreAction->setEnabled(_moreElements);
+
+            /*if (filterActive || (cellAt(i) && cellAt(i)->readOnly))
+                  deleteCellAction->setEnabled(false);
+
+            if (!deleteCellAction->isEnabled() && !contextAction->isEnabled() && !moreAction->isEnabled())
+                  return;
+            */
+            QAction* action = menu.exec(mapToGlobal(event->pos()));
+
+            if (action == deleteCellAction) {
+                        int ret = QMessageBox::warning(this, QWidget::tr("Delete palette cell"),
+                                                      QWidget::tr("Are you sure you want to delete palette cell \"%1\"?")
+                                                      .arg(cell->name), QMessageBox::Yes | QMessageBox::No,
+                                                      QMessageBox::Yes);
+                        if (ret != QMessageBox::Yes)
+                              return;
+                        if(cell->tag == "ShowMore")
+                              _moreElements = false;
+                        delete cell;
+                        emit changed();
+                        return;
+                  }
+            else if (action == contextAction) {
+                  PaletteCellProperties props(cell);
+                  if (props.exec())
+                        emit changed();
+                  }
+            else if (moreAction && (action == moreAction))
+                  emit displayMore(_name);
+            /*
+            bool sizeChanged = false;
+            for (int j = 0; j < cells.size(); ++j) {
+                  if (!cellAt(j)) {
+                        cells.removeAt(j);
+                        sizeChanged = true;
+                        }
+                  }
+            if (sizeChanged) {
+                  setFixedHeight(heightForWidth(width()));
+                  updateGeometry();
+                  }
+            */
+            menu.exec(mapToGlobal(event->pos()));
+            }
+  	}
 }
