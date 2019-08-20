@@ -245,15 +245,10 @@ class PaletteCellItem : public  QListWidgetItem {
 class PaletteList : public QListWidget {
          Q_OBJECT
 
-         QList<PaletteCellItem*> cells;
-         QList<PaletteCellItem*> dragCells;
          int hgrid;
          int vgrid;
          qreal extraMag;
-         QListWidgetItem* currIdx;
-         int currentIdx;
-         PaletteCellItem* dragIdx;
-         int selectedIdx;
+         PaletteCellItem* dragItem;
          QPoint dragStartPosition;
          bool _moreElements;
          QString _name;
@@ -283,8 +278,7 @@ class PaletteList : public QListWidget {
             PaletteList(QWidget* parent); 
             void  read(XmlReader& e);
             void setGrid(int ,int);
-            int getCurrentIdx() { return currentIdx; }
-            void setCurrentIdx(int i) { currentIdx = i; }
+            PaletteCellItem* currentItem() { return static_cast<PaletteCellItem*>(QListWidget::currentItem()); }
             void setShowContextMenu(bool val) { _showContextMenu = val; }
 
       };

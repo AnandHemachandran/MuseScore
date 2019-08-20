@@ -1936,9 +1936,7 @@ void Palette::dropEvent(QDropEvent* event)
 PaletteList::PaletteList(QWidget* parent) : QListWidget(parent)
       {
       extraMag      = 1.0;
-      currentIdx    = -1;
-      dragIdx       = 0;
-      selectedIdx   = -1;
+      dragItem       = 0;
       setMouseTracking(true);
       setAutoFillBackground(true);
       setViewMode(QListView::IconMode);
@@ -2011,42 +2009,37 @@ void PaletteList::setGrid(int hh, int vv)
 void PaletteList::keyPressEvent(QKeyEvent *event)
       {
       int numItems = count();
-      currIdx = this->currentItem();
-      int pos = row(currIdx);
+      int pos = currentRow();
       switch(event->key()){
             case Qt::Key_Return:
-                  applyPaletteElement(static_cast<PaletteCellItem*>(currIdx), event->modifiers());
+                  applyPaletteElement(currentItem(), event->modifiers());
                   return;    
                   break;
             case Qt::Key_Down:
                 pos++;
                 if (pos < numItems) {
-                    currIdx = item(pos);
-                    setCurrentItem(currIdx);
+                    setCurrentItem(item(pos));
                     return;
                 }
                 break;
             case Qt::Key_Up:
                 if (pos > 0) {
                     pos--;
-                    currIdx = item(pos);
-                    setCurrentItem(currIdx);
+                    setCurrentItem(item(pos));
                     return;
                 }
                 break;
             case Qt::Key_Left:
                 if (pos > 0) {
                     pos--;
-                    currIdx = item(pos);
-                    setCurrentItem(currIdx);
+                    setCurrentItem(item(pos));
                     return;
                 }
                 break;
             case Qt::Key_Right:
                 pos++;
                 if (pos < numItems) {
-                    currIdx = item(pos);
-                    setCurrentItem(currIdx);
+                    setCurrentItem(item(pos));
                     return;
                 }
                 break;
@@ -2167,10 +2160,10 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
             ev->ignore();
             return;
             }
-      if ((currentIdx != -1) && (row(dragIdx) == currentIdx) && (ev->buttons() & Qt::LeftButton)
+      if ((currentRow() != -1) && /* (row(dragItem) == currentIdx) && */ (ev->buttons() & Qt::LeftButton)
          && (ev->pos() - dragStartPosition).manhattanLength() > QApplication::startDragDistance())
             {
-            PaletteCellItem* cell = static_cast<PaletteCellItem*>(item(currentIdx));
+            PaletteCellItem* cell = currentItem();
             if (cell && cell->element) {
                   QDrag* drag         = new QDrag(this);
                   QMimeData* mimeData = new QMimeData;
@@ -2185,22 +2178,17 @@ void PaletteList::mouseMoveEvent(QMouseEvent* ev)
                   drag->setHotSpot(hotsp);
                   Qt::DropActions da;
                   if ((ev->modifiers() & Qt::ShiftModifier)) {
-                        dragCells = cells;      // backup
                         da = Qt::MoveAction;
                         }
                   else
                         da = Qt::CopyAction;
-                  Qt::DropAction a = drag->exec(da);
-                  if (da == Qt::MoveAction && a != da)
-                        cells = dragCells;      // restore on a failed move action
+                  drag->exec(da);
                   update();
                   }
             }
       else {
-            PaletteCellItem* curr = static_cast<PaletteCellItem*>(currentItem());
-            currentIdx = row(curr);
-            if (currentIdx != -1 && item(currentIdx) == 0)
-                  currentIdx = -1;
+            if (currentRow() != -1 && currentItem() == 0)
+                  setCurrentRow(-1);
             update();
             }
       }
@@ -2244,7 +2232,7 @@ void PaletteList::applyPaletteElement()
       if (sel.isNone())
             return;
       // apply currently selected palette symbol to selected score elements
-      int i = currentIdx;
+      int i = currentRow();
       PaletteCellItem* cell = static_cast<PaletteCellItem*>(item(i));
       if (/*i < size() && */cell)
             applyPaletteElement(cell);
@@ -2533,7 +2521,7 @@ void PaletteList::mousePressEvent(QMouseEvent* ev)
   	{
   	QListWidget::mousePressEvent(ev);
   	dragStartPosition = ev->pos();
-  	dragIdx       	= static_cast<PaletteCellItem*>(itemAt(dragStartPosition));
+  	dragItem       	= static_cast<PaletteCellItem*>(itemAt(dragStartPosition));
       }
 
 //---------------------------------------------------------
@@ -2585,11 +2573,9 @@ void PaletteList::dragMoveEvent(QDragMoveEvent* event)
       int i = currentRow();
       if (event->source() == this) {
             if (i != -1) {
-                  if (currentIdx != -1 && event->proposedAction() == Qt::MoveAction) {
-                        if (i != currentIdx) {
-                              PaletteCellItem* c = static_cast<PaletteCellItem*>(item(i));
-                              cells.insert(i, c);
-                              currentIdx = i;
+                  if (currentRow() != -1 && event->proposedAction() == Qt::MoveAction) {
+                        if (i != currentRow()) {
+                              setCurrentRow(i);
                               update();
                               }
                         event->accept();
