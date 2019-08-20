@@ -18,6 +18,223 @@
 namespace Ms {
 
 //---------------------------------------------------------
+//   PaletteTree
+//---------------------------------------------------------
+
+PaletteTree::PaletteTree(QWidget* parent) 
+   : QTreeWidget(parent) 
+      {
+      
+      }
+
+//---------------------------------------------------------
+//  resizeEvent
+//---------------------------------------------------------
+void PaletteTree::resizeEvent(QResizeEvent* event)
+      {
+      QTreeWidget::resizeEvent(event);
+      int numPalettes = topLevelItemCount();
+      for (int i = 0; i < numPalettes; i++) {
+            QTreeWidgetItem* paletteItem = topLevelItem(i);
+            QTreeWidgetItem* paletteChild = paletteItem->child(0);
+            if (paletteChild && !paletteChild->isHidden()) {
+                  paletteChild->setHidden(true);
+                  paletteChild->setHidden(false);
+                  }
+            }
+      }
+
+//---------------------------------------------------------
+//   showEvent
+//---------------------------------------------------------
+
+void PaletteTree::showEvent(QShowEvent* event)
+      {
+      QTreeWidget::showEvent(event);
+      int numPalettes = topLevelItemCount();
+      for (int i = 0; i < numPalettes; i++) {
+            QTreeWidgetItem* paletteItem = topLevelItem(i);
+            if (!paletteItem->isExpanded()) {
+                  paletteItem->setExpanded(true);
+                  paletteItem->setExpanded(true);
+                  paletteItem->setExpanded(false);
+                  }  
+            }
+      }
+
+//---------------------------------------------------------
+//   ContextMenuEvent
+//---------------------------------------------------------
+
+void PaletteTree::contextMenuEvent(QContextMenuEvent* event) 
+  	{
+  	QTreeWidgetItem* item = itemAt(event->pos());
+  	QMenu menu;
+  	menu.addAction(item->text(0));
+      menu.addSeparator();
+      QAction* actionProperties = menu.addAction(tr("Palette Properties…"));
+      QAction* actionInsert     = menu.addAction(tr("Insert New Palette…"));
+      QAction* actionUp         = menu.addAction(tr("Move Palette Up"));
+      QAction* actionDown       = menu.addAction(tr("Move Palette Down"));
+      QAction* actionEdit       = menu.addAction(tr("Enable Editing"));
+      actionEdit->setCheckable(true);
+      //actionEdit->setChecked(!palette->readOnly());
+      //bool _systemPalette = palette->systemPalette();
+      /*
+      actionProperties->setDisabled(_systemPalette);
+      actionInsert->setDisabled(_systemPalette);
+      actionUp->setDisabled(_systemPalette);
+      actionDown->setDisabled(_systemPalette);
+      actionEdit->setDisabled(_systemPalette);
+      */
+      menu.addSeparator();
+      QAction* actionSave = menu.addAction(tr("Save Palette…"));
+      QAction* actionLoad = menu.addAction(tr("Load Palette…"));
+      //actionLoad->setDisabled(_systemPalette);
+
+      menu.addSeparator();
+      QAction* actionDelete = menu.addAction(tr("Delete Palette"));
+      //actionDelete->setDisabled(_systemPalette);
+
+      QAction* action = menu.exec(mapToGlobal(event->pos()));
+      
+      if (action == actionProperties)
+            propertiesTriggered(item);
+      else if (action == actionInsert)
+            newTriggered(item);
+      else if (action == actionUp)
+            upTriggered(item);
+      else if (action == actionDown)
+            downTriggered(item);
+      /*else if (action == actionEdit)
+            enableEditing(action->isChecked());
+      */
+      else if (action == actionSave)
+            saveTriggered(item);
+      else if (action == actionLoad)
+            loadTriggered(item);
+      else if (action == actionDelete)
+            deleteTriggered(item);
+  	//menu.exec(mapToGlobal(event->pos()));
+  	}
+
+//---------------------------------------------------------
+//   paletteItemCmd
+//---------------------------------------------------------
+
+void PaletteTree::paletteItemCmd(PaletteCommand cmd, QTreeWidgetItem* item)
+      {
+      switch(cmd) {
+            case PaletteCommand::PDELETE:
+                  {
+                  QMessageBox::StandardButton reply;
+                  reply = QMessageBox::question(0,
+                             QWidget::tr("Are you sure?"),
+                             QWidget::tr("Do you really want to delete the palette?"),
+                             QMessageBox::Yes | QMessageBox::No,
+                             QMessageBox::Yes
+                             );
+                  if (reply == QMessageBox::Yes) {
+                        delete item;
+                        /*item = vbox->itemAt(slot);
+                        vbox->removeItem(item);
+                        delete item->widget();
+                        delete item;
+                        for (int i = 0; i < (vbox->count() - 1) / 2; ++i)
+                              static_cast<PaletteBoxButton*>(vbox->itemAt(i * 2)->widget())->setId(i*2);
+                        
+                        emit changed();
+                        */
+                        }
+                  break;
+                  }
+
+            case PaletteCommand::SAVE :
+                  {
+                  /*
+                  QString path = mscore->getPaletteFilename(false, palette->name());
+                  if (!path.isEmpty())
+                        palette->write(path);
+                   */
+                  break;
+                  }
+
+            case PaletteCommand::LOAD:
+                  {
+                  /*
+                  QString path = mscore->getPaletteFilename(true);
+                  if (!path.isEmpty()) {
+                        QFileInfo fi(path);
+                        palette = newPalette(fi.completeBaseName(), slot);
+                        palette->read(path);
+                        }
+                  emit changed();
+                  */
+                  break;
+                  }
+                  
+
+            case PaletteCommand::NEW :
+                  {
+                  QTreeWidgetItem* newItem = new QTreeWidgetItem(this);
+                  newItem->setText(0,"Untitled");
+                  // fall through
+                  break;
+                  }
+
+            case PaletteCommand::EDIT :
+                  {
+                  /*
+                  PaletteProperties pp(palette, 0);
+                  int rv = pp.exec();
+                  if (rv == 1) {
+                        emit changed();
+                        b->setText(palette->name());
+                        palette->update();
+                        }
+                  emit changed();
+                  */
+                  break;
+                  }
+                  
+
+            case PaletteCommand::UP :
+                  {
+                  if (item) {
+                        qDebug() << "The Position of the paletteItem is " << currentIndex().row();
+                        int row  = currentIndex().row();
+                        if (item && row > 0)
+                              {
+                              takeTopLevelItem(row);
+                              insertTopLevelItem(row - 1, item);
+                              setCurrentItem(item);
+                              }
+                  //emit changed();
+                        }
+                  break;
+                  }
+
+            case PaletteCommand::DOWN :
+                  {
+                  if (item) {
+                  qDebug() << "The Position of the paletteItem is " << currentIndex().row();
+                  int row  = currentIndex().row();
+                  int n = topLevelItemCount();
+                        if (item && (row < n-1))
+                              {
+                              takeTopLevelItem(row);
+                              insertTopLevelItem(row + 1, item);
+                              setCurrentItem(item);
+                              }
+                  //emit changed(); 
+                        }
+                  break;
+                  } 
+
+            default:;
+            }
+      }
+//---------------------------------------------------------
 //   PaletteBoxButton
 //---------------------------------------------------------
 
