@@ -1960,7 +1960,7 @@ void PaletteList::read(XmlReader& e)
             else if (t == "grid")
                   /*_drawGrid =*/ e.readInt();
             else if (t == "moreElements")
-                  /*setMoreElements(*/ e.readInt();
+                  setMoreElements(e.readInt());
             else if (t == "yoffset")
                   /*_yOffset =*/ e.readDouble();
             else if (t == "drumPalette")      // obsolete

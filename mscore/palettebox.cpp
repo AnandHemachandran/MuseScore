@@ -428,15 +428,15 @@ bool PaletteBox::read(XmlReader& e)
       while (e.readNextStartElement()) {
             const QStringRef& tag(e.name());
             if (tag == "Palette") {
-                  Palette* p = new Palette();
                   QString name = e.attribute("name");
-                  p->setName(name);
                   QTreeWidgetItem* paletteItem = new QTreeWidgetItem(tree);
                   paletteItem->setText(0,name);
                   PaletteList* paletteList = new PaletteList(tree);
+                  paletteList->_name = name;
                   QTreeWidgetItem* paletteElementsItem = new QTreeWidgetItem(paletteItem);
                   tree->setItemWidget(paletteElementsItem, 0, paletteList);
                   paletteList->read(e);
+                  connect(paletteList, SIGNAL(displayMore(const QString&)), mscore, SLOT(showMasterPalette(const QString&)));
                   paletteList->QAbstractScrollArea::setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
                   }
             else

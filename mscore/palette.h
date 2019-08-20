@@ -251,7 +251,6 @@ class PaletteList : public QListWidget {
          PaletteCellItem* dragItem;
          QPoint dragStartPosition;
          bool _moreElements;
-         QString _name;
          bool _showContextMenu { true };
 
          bool _disableDoubleClick { false };
@@ -274,12 +273,14 @@ class PaletteList : public QListWidget {
             void displayMore(const QString& paletteName);
             
          public:
+            QString _name;
             void applyPaletteElement();
             PaletteList(QWidget* parent); 
             void  read(XmlReader& e);
             void setGrid(int ,int);
             PaletteCellItem* currentItem() { return static_cast<PaletteCellItem*>(QListWidget::currentItem()); }
             void setShowContextMenu(bool val) { _showContextMenu = val; }
+            void setMoreElements(bool val) { _moreElements = val; }
 
       };
 
