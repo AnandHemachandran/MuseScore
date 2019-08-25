@@ -1967,7 +1967,7 @@ void PaletteList::read(XmlReader& e)
                   e.skipCurrentElement();
             else if (t == "Cell") {
                   PaletteCellItem* cell = new PaletteCellItem(this);
-                  //cell->setName(e.attribute("name"));
+                  cell->setName(e.attribute("name"));
                   cell->name = e.attribute("name");
                   cell->setToolTip(e.attribute("name"));
                   if (!cell->read(e, extraMag)){
